@@ -8,7 +8,7 @@ from torchvision import datasets
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 from torchmetrics.functional.regression import mean_absolute_error
-from lightning.pytorch.callbacks.early_stopping import EarlyStopping
+from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 
 
 # define the LightningModule
@@ -80,7 +80,9 @@ def train_test():
     test_loader = DataLoader(test_set, batch_size=64)
 
     # train the model (hint: here are some helpful Trainer arguments for rapid idea iteration)
-    trainer = L.Trainer(limit_train_batches=200, max_epochs=2, callbacks=[EarlyStopping(monitor="val_MAE", mode="min")])
+    early_stop_callback = EarlyStopping(monitor="val_MAE", mode="min")
+    checkpoint_callback = ModelCheckpoint(filename="{epoch:02d}-{val_MAE:.3f}", monitor="val_MAE", mode="min")
+    trainer = L.Trainer(limit_train_batches=200, max_epochs=2, callbacks=[early_stop_callback, checkpoint_callback])
     trainer.fit(model=autoencoder, train_dataloaders=train_loader, val_dataloaders=valid_loader)
     trainer.test(model=autoencoder, dataloaders=test_loader)
 
